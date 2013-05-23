@@ -7,7 +7,19 @@ var Oven = function(){
   };
 
   this.bake = function(){
-    this.cook_time ++
+    this.cook_time ++;
+    for (var i = 0; i < this.contents.length; i++) {
+    if (this.cook_time < this.contents[i].bakeTime ){
+      this.contents[i].state = "still_gooey"
+    }
+    else if (this.cook_time === this.contents[i].bakeTime) {
+      this.contents[i].state = 'just_right'
+    }
+    else if (this.cook_time > this.contents[i].bakeTime) {
+      this.contents[i].state = "crispy"
+    }
+    ;
+}
   };
 
   this.init();
@@ -34,26 +46,37 @@ var Batch = function(type, bakeTime){
 $(document).ready(function(){
 var oven = new Oven();
 var prepTable = new PrepTable();
+var id = 0
 
 $('form').on('submit', function(e){
   e.preventDefault();
   var type = $('input[name=batch_type]').val()
-  var bakeTime = $('input[name=bake_time]').val()
+  var bakeTime = parseInt($('input[name=bake_time]').val())
   var newBatch = new Batch(type, bakeTime);
-  prepTable.contents.push(newBatch)
-  var index = prepTable.contents.indexOf(newBatch)
-  $('#prep_batches').append("<li id="+index+">"+newBatch.type+"<button>Add to Oven</button></li>")
+  prepTable[id] = newBatch
+  $('#prep_batches').append("<li id="+id+">"+newBatch.type+"<button>Add to Oven</button></li>")
   $('input[name=batch_type]').val("")
   $('input[name=bake_time]').val("")
+  id ++
 
 });
 
 $('#prep_batches').on('click', 'button', function(){
   var batchName = $(this).parent('li').clone().children('button').remove().end().text()
-  var index = $(this).parent('li').attr('id')
-  oven.contents.push(prepTable.contents[index])
-  prepTable.contents.splice(index, 1)
-  $('#rack_' + index).text()
+  var id = $(this).parent('li').attr('id')
+  var batch = prepTable[id]
+  oven.contents.push(batch)
+  delete prepTable[id]
+  $(this).parent('li').remove()
+  $('#rack_' + id).addClass('raw').text(batchName + "--" + batch.state )
 })
+
+$('#bake').on('click', function(){
+  oven.bake();
+  $('td').each(function(index, element){
+    $(element).addClass(oven.contents[index].state)
+  });
+
+});
 
 });
